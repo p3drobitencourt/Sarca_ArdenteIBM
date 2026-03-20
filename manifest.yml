@@ -1,0 +1,41 @@
+---
+# IBM Cloud Manifest - Sarca Ardente
+# Plataforma: IBM Cloud Cloud Foundry / App Engine
+# Grupo: Enrique, Pedro, Luis Gustavo, João Henrique
+
+applications:
+  - name: sarca-ardente
+    memory: 512M
+    disk_quota: 1G
+    instances: 1
+    buildpacks:
+      - nodejs_buildpack
+    command: npm run build && npm start
+    env:
+      # IBM Cloud Services
+      IBM_CLOUDANT_URL: ${CLOUDANT_URL}
+      IBM_CLOUDANT_API_KEY: ${CLOUDANT_API_KEY}
+      IBM_APPID_INSTANCE: ${APPID_INSTANCE}
+      IBM_APPID_CLIENT_ID: ${APPID_CLIENT_ID}
+      IBM_APPID_CLIENT_SECRET: ${APPID_CLIENT_SECRET}
+      IBM_APPID_REDIRECT_URI: ${APPID_REDIRECT_URI}
+      IBM_WATSON_ASSISTANT_URL: ${WATSON_ASSISTANT_URL}
+      IBM_WATSON_ASSISTANT_API_KEY: ${WATSON_ASSISTANT_API_KEY}
+      IBM_WATSON_ASSISTANT_AUTH_TYPE: iam
+      
+      # Next.js
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://sarca-ardente.cloud.ibm.com
+    
+    # Conecta aos serviços IBM Cloud
+    services:
+      - cloudant-sarca
+      - appid-sarca
+      - watson-assistant-sarca
+    
+    # Arquivo de logs
+    log_files:
+      - /app/logs/*.log
+
+# Domínio customizado (opcional)
+# domain: sarca-ardente.cloud.ibm.com
