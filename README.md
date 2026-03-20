@@ -1,5 +1,5 @@
-# Firebase Studio
+# IBM CLOUD
 
-This is a NextJS starter in Firebase Studio.
+This is a NextJS starter in IBM CLOUD.
 
-To get started, take a look at src/app/page.tsx.
+
