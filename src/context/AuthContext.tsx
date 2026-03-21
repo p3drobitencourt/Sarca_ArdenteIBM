@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { Loader } from '@/components/ui/loader'; // Usaremos seu loader!
+import { Loader } from '@/components/ui/loader';
 
 // Define o tipo de dados que o contexto irá fornecer
 interface AuthContextType {
-  user: User | null;
+  user: any | null;
+  email?: string;
+  loading: boolean;
 }
 
 // Cria o contexto
@@ -15,18 +15,22 @@ const AuthContext = createContext<AuthContextType>({ user: null });
 
 // Cria o componente Provedor
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged é o observador que reage a mudanças de login/logout
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    // Limpa o observador quando o componente é desmontado
-    return () => unsubscribe();
+    // Verifica se há sessão do App ID salva em localStorage
+    const session = localStorage.getItem('appid_session');
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        setUser(parsed.user);
+      } catch (e) {
+        console.error('Erro ao parsear sessão:', e);
+        localStorage.removeItem('appid_session');
+      }
+    }
+    setLoading(false);
   }, []);
 
   // Enquanto verifica o usuário, mostra uma tela de carregamento global
@@ -39,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );

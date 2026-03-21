@@ -108,10 +108,7 @@ export async function createDocument(
       document: cleanData,
     });
     
-    return {
-      id: response.result?.id,
-      ...response.result,
-    };
+    return response.result;
   } catch (error) {
     console.error(`Erro ao criar documento em ${dbName}:`, error);
     throw error;
