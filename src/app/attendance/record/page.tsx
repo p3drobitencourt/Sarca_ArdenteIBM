@@ -2,66 +2,120 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, UserCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Check, X, AlertCircle, Calendar as CalendarIcon } from "lucide-react";
 
 export default function AttendanceRecordPage() {
   const [members, setMembers] = useState<any[]>([]);
-  const [marked, setMarked] = useState<string[]>([]); // Guarda os IDs de quem já ganhou presença hoje
+  const [attendanceMap, setAttendanceMap] = useState<any>({}); // Mapeia memberId -> status
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Busca os membros da API que você já criou
-    fetch('/api/members')
-      .then(res => res.json())
-      .then(data => {
-        if (!data.error) setMembers(data);
-        setLoading(false);
-      });
-  }, []);
+  // Carrega membros e as presenças da data selecionada
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [mRes, aRes] = await Promise.all([
+        fetch('/api/members'),
+        fetch(`/api/attendance?date=${selectedDate}`)
+      ]);
+      
+      const mData = await mRes.json();
+      const aData = await aRes.json();
 
-  const handleMarkAttendance = async (memberId: string, memberName: string) => {
+      if (!mData.error) setMembers(mData);
+      
+      // Cria um mapa de presenças para busca rápida: { "id_do_joao": "presente" }
+      const map: any = {};
+      aData.forEach((rec: any) => { map[rec.memberId] = rec.status; });
+      setAttendanceMap(map);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, [selectedDate]);
+
+  const handleMark = async (member: any, status: string) => {
     try {
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memberId, memberName })
+        body: JSON.stringify({ 
+          memberId: member._id, 
+          memberName: member.name, 
+          date: selectedDate, 
+          status 
+        })
       });
 
       if (res.ok) {
-        setMarked(prev => [...prev, memberId]); // Marca visualmente na tela
+        setAttendanceMap((prev: any) => ({ ...prev, [member._id]: status }));
       }
     } catch (err) {
-      alert("Erro ao registrar presença.");
+      alert("Erro ao salvar.");
     }
   };
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold flex items-center gap-2">
-        <UserCheck className="text-green-600" /> Registro de Presença
-      </h1>
-      <p className="text-muted-foreground">Chamada para o dia {new Date().toLocaleDateString('pt-BR')}</p>
+    <div className="p-8 max-w-3xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-3xl font-bold">Chamada</h1>
+        <div className="flex items-center gap-2 bg-white p-2 border rounded-lg shadow-sm">
+          <CalendarIcon className="w-5 h-5 text-gray-400" />
+          <Input 
+            type="date" 
+            value={selectedDate} 
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="border-none focus-visible:ring-0"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 p-4 bg-white border rounded-lg shadow-sm text-sm">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-green-600"></span>
+          <span className="font-bold text-green-700">P:</span> <span>Presente</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-red-600"></span>
+          <span className="font-bold text-red-700">F:</span> <span>Falta</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-yellow-600"></span>
+          <span className="font-bold text-yellow-700">FJ:</span> <span>Falta Justificada</span>
+        </div>
+      </div>
 
       <Card>
-        <CardHeader><CardTitle>Lista de Membros</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Membros</CardTitle></CardHeader>
         <CardContent>
-          {loading ? <p>Carregando...</p> : (
+          {loading ? <p className="text-center p-4">Sincronizando com Cloudant...</p> : (
             <div className="divide-y border rounded-lg overflow-hidden bg-white">
               {members.map((m) => {
-                const isMarked = marked.includes(m._id);
+                const currentStatus = attendanceMap[m._id];
                 return (
-                  <div key={m._id} className="p-4 flex justify-between items-center">
-                    <span className="font-medium">{m.name}</span>
-                    <Button 
-                      onClick={() => handleMarkAttendance(m._id, m.name)}
-                      disabled={isMarked}
-                      variant={isMarked ? "outline" : "default"}
-                      className={isMarked ? "text-green-600 border-green-600" : ""}
-                    >
-                      {isMarked ? (
-                        <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Presente</span>
-                      ) : "Confirmar Presença"}
-                    </Button>
+                  <div key={m._id} className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <span className="font-medium text-lg">{m.name}</span>
+                    <div className="flex gap-2">
+                      <StatusButton 
+                        active={currentStatus === 'presente'} 
+                        variant="presente"
+                        onClick={() => handleMark(m, 'presente')} 
+                      />
+                      <StatusButton 
+                        active={currentStatus === 'falta'} 
+                        variant="falta"
+                        onClick={() => handleMark(m, 'falta')} 
+                      />
+                      <StatusButton 
+                        active={currentStatus === 'justificada'} 
+                        variant="justificada"
+                        onClick={() => handleMark(m, 'justificada')} 
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -69,7 +123,29 @@ export default function AttendanceRecordPage() {
           )}
         </CardContent>
       </Card>
-      <Button variant="ghost" onClick={() => window.location.href = '/'}>Voltar ao Início</Button>
     </div>
+  );
+}
+
+// Componente auxiliar para os botões de status
+function StatusButton({ active, variant, onClick }: any) {
+  const styles: any = {
+    presente: active ? "bg-green-600 text-white" : "text-green-600 border-green-600 hover:bg-green-50",
+    falta: active ? "bg-red-600 text-white" : "text-red-600 border-red-600 hover:bg-red-50",
+    justificada: active ? "bg-yellow-600 text-white" : "text-yellow-600 border-yellow-600 hover:bg-yellow-50",
+  };
+  
+  const labels: any = { presente: "P", falta: "F", justificada: "FJ" };
+
+  return (
+    <Button 
+      variant="outline" 
+      size="sm"
+      className={`w-12 h-10 font-bold ${styles[variant]}`}
+      onClick={onClick}
+      disabled={active}
+    >
+      {labels[variant]}
+    </Button>
   );
 }
