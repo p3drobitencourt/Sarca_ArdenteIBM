@@ -85,7 +85,7 @@ export function getLoginUrl(state?: string): string {
     state: state || Math.random().toString(36).substring(7),
   });
   
-  return `https://${config.instanceId}.${config.region}.appauthen.cloud.ibm.com/oauth/authorize?${params.toString()}`;
+  return `https://${config.region}.appid.cloud.ibm.com/oauth/v4/${config.instanceId}/authorize?${params.toString()}`;
 }
 
 /**
@@ -96,7 +96,7 @@ export async function exchangeCodeForTokens(code: string): Promise<AppIDSession>
   
   try {
     const response = await fetch(
-      `https://${config.instanceId}.${config.region}.appauthen.cloud.ibm.com/oauth/token`,
+      `https://${config.region}.appid.cloud.ibm.com/oauth/v4/${config.instanceId}/token`,
       {
         method: 'POST',
         headers: {
@@ -199,7 +199,7 @@ export async function validateToken(accessToken: string): Promise<AppIDUser> {
   
   try {
     const response = await fetch(
-      `https://${config.instanceId}.${config.region}.appauthen.cloud.ibm.com/oauth/introspect`,
+      `https://${config.region}.appid.cloud.ibm.com/oauth/v4/${config.instanceId}/introspect`,
       {
         method: 'POST',
         headers: {

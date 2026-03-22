@@ -3,37 +3,32 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Loader } from '@/components/ui/loader';
 
-// Define o tipo de dados que o contexto irá fornecer
 interface AuthContextType {
   user: any | null;
-  email?: string;
   loading: boolean;
 }
 
-// Cria o contexto
-const AuthContext = createContext<AuthContextType>({ user: null });
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
-// Cria o componente Provedor
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verifica se há sessão do App ID salva em localStorage
-    const session = localStorage.getItem('appid_session');
-    if (session) {
+    const checkAuth = async () => {
       try {
-        const parsed = JSON.parse(session);
-        setUser(parsed.user);
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        setUser(data.user);
       } catch (e) {
-        console.error('Erro ao parsear sessão:', e);
-        localStorage.removeItem('appid_session');
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+    checkAuth();
   }, []);
 
-  // Enquanto verifica o usuário, mostra uma tela de carregamento global
   if (loading) {
     return (
       <div className="fixed inset-0 flex h-screen w-screen items-center justify-center bg-background">
@@ -49,7 +44,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Cria um hook customizado para facilitar o uso do contexto
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

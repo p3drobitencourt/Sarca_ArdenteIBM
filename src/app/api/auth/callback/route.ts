@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Step 4: Create response with secure cookie
-    const response = NextResponse.redirect(new URL('/dashboard', request.url));
+    const response = NextResponse.redirect(new URL('/', request.url));
 
     // Set HttpOnly secure cookie with session
     response.cookies.set('appid_session', JSON.stringify(session), {
