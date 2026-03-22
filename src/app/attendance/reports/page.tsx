@@ -10,6 +10,20 @@ export default function ReportsPage() {
   const [view, setView] = useState<'daily' | 'individual'>('daily');
   const [loading, setLoading] = useState(true);
 
+  const clearHistory = async () => {
+    if (!confirm("A Pimba Corp. avisa: isso apagará TODAS as presenças. Deseja continuar?")) return;
+    
+    try {
+      const res = await fetch('/api/attendance', { method: 'DELETE' });
+      if (res.ok) {
+        alert("Histórico apagado!");
+        window.location.reload(); // Recarrega para limpar a tela
+      }
+    } catch (err) {
+      alert("Erro ao limpar histórico.");
+    }
+  };
+
   useEffect(() => {
     fetch('/api/attendance')
       .then(res => res.json())
@@ -59,6 +73,9 @@ export default function ReportsPage() {
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <BarChart3 className="text-blue-600" /> Relatórios
         </h1>
+        <Button variant="destructive" onClick={clearHistory}>
+          Limpar Histórico
+        </Button>
         <Button variant="outline" onClick={() => window.location.href = '/'}>
           <ChevronLeft className="w-4 h-4 mr-2" /> Voltar
         </Button>

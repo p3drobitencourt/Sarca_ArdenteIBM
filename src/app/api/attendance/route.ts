@@ -46,3 +46,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const client = getCloudantClient();
+    const response = await client.postAllDocs({
+      db: DB_NAME,
+      includeDocs: true
+    });
+
+    // Filtra todos os documentos que são do tipo 'attendance'
+    const docsToDelete = response.result.rows
+      ?.filter(row => (row.doc as any).type === 'attendance')
+      .map(row => ({
+        _id: row.id,
+        _rev: (row.doc as any)._rev,
+        _deleted: true
+      })) || [];
+
+    if (docsToDelete.length > 0) {
+      // Deleta todos de uma vez (Bulk Update)
+      await client.postBulkDocs({
+        db: DB_NAME,
+        bulkDocs: { docs: docsToDelete }
+      });
+    }
+
+    return NextResponse.json({ message: "Histórico limpo com sucesso" });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
