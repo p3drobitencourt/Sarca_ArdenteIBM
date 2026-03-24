@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, UserCheck, BarChart3, ArrowRight, Activity, Building2 } from "lucide-react";
-
+import { Users, UserCheck, BarChart3, ArrowRight, Activity, Building2, LogOut } from "lucide-react";
 export default function HomePage() {
   const [stats, setStats] = useState({ members: 0, today: 0 });
   const [loading, setLoading] = useState(true);
@@ -60,6 +59,14 @@ export default function HomePage() {
           <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
             <Building2 className="w-4 h-4" /> Pimba Corp. Verified
           </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-500 hover:text-red-700 hover:bg-red-50 font-bold flex gap-2"
+            onClick={() => window.location.href = '/api/auth/logout'}
+          >
+            <LogOut className="w-4 h-4" /> Sair do Sistema
+          </Button>
         </header>
 
         {/* Cards de Resumo */}

@@ -1,91 +1,33 @@
 "use client";
-
-import * as React from "react";
-import { useEffect, useState } from 'react';
-import { useRouter } from "next/navigation";
-import { useAuth } from '@/context/AuthContext';
-
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Icons } from "@/components/icons";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Redireciona se o usuário já estiver logado
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/');
-    }
-  }, [user, loading, router]);
-
-  // IBM App ID OAuth 2.0 login (Authorization Code Grant flow)
-  const handleOAuthLogin = async () => {
-    try {
-      setIsLoading(true);
-      // Redireciona para rota de login que inicia o fluxo OAuth com App ID
-      window.location.href = '/api/auth/login';
-    } catch (error) {
-      console.error("Erro ao iniciar autenticação:", error);
-      toast({
-        title: "Erro de Autenticação",
-        description: "Não foi possível iniciar o processo de autenticação. Tente novamente.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Card className="w-full max-w-sm">
-          <CardContent className="flex h-40 items-center justify-center">
-            <p className="text-muted-foreground">Carregando...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-orange-600">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <Icons.logo className="h-12 w-12 text-primary" />
+          <div className="flex justify-center mb-4">
+            <Building2 className="w-12 h-12 text-orange-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Sarça Ardente</CardTitle>
-          <CardDescription>
-            Sistema de Gestão de Membros
-          </CardDescription>
+          <CardTitle className="text-2xl font-black">Pimba Corp. Auth</CardTitle>
+          <p className="text-gray-500 text-sm italic">Bem-vindo ao sistema Sarça Ardente</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-sm text-muted-foreground">
-            Você será redirecionado para fazer login com segurança.
+          <p className="text-center text-gray-600">
+            Para acessar os relatórios e chamadas, identifique-se abaixo.
           </p>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
           <Button 
-            onClick={handleOAuthLogin} 
-            className="w-full" 
-            disabled={isLoading}
-            size="lg"
+            className="w-full bg-orange-600 hover:bg-orange-700 h-12 text-lg font-bold flex gap-2"
+            onClick={() => window.location.href = '/api/auth/login'}
           >
-            {isLoading ? "Autenticando..." : "Fazer Login com IBM App ID"}
+            <LogIn className="w-5 h-5" /> Entrar com IBM ID
           </Button>
-        </CardFooter>
+        </CardContent>
+        <footer className="p-4 text-center text-[10px] text-gray-400 uppercase tracking-widest border-t">
+          Security by Pimba Corporation &copy; 2026
+        </footer>
       </Card>
     </div>
   );
